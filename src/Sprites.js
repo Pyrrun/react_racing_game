@@ -15,7 +15,7 @@ import semi from './Assets/semi.png';
 
 class Sprites extends React.Component {
 
-
+        SCALE = 2
         bgStyle = {        
             width: 0, 
             height: 0, 
@@ -36,12 +36,16 @@ class Sprites extends React.Component {
             var img3 = this.refs.img3
             var img4 = this.refs.img4
             var img5 = this.refs.img5
+            var img6 = this.refs.img6
             ctx.clearRect(0, 0, this.props.width, this.props.height);
-            for(var n=0; n< this.props.list.length;n++){
-                var car = this.props.list[n];
-                var destW  = (car.sprite.w * car.spriteScale * this.props.width/2) * (SPRITES_SCALE * this.props.roadWidth);
-                var destH  = (car.sprite.h * car.spriteScale * this.props.width/2) * (SPRITES_SCALE * this.props.roadWidth);
-                var image = null;
+            var n,car,destW,destH,image,destX,destY;
+            for(n=0; n< this.props.list.length;n++){
+                car = this.props.list[n];
+                destW  = ( car.sprite.w * car.spriteScale * this.props.width/2) * (SPRITES_SCALE * this.props.roadWidth);
+                destH  = ( car.sprite.h * car.spriteScale * this.props.width/2) * (SPRITES_SCALE * this.props.roadWidth);
+                image = null;
+                destX = car.x + (destW * (-0.5 || 0));
+                destY = car.y + (destH * (-1   || 0));
                 switch(car.sprite){
                     case SPRITES.CAR01: 
                             image = img
@@ -59,13 +63,13 @@ class Sprites extends React.Component {
                             image = img5
                         break;
                     case SPRITES.SEMI: 
-                            image = img5
+                            image = img6
                     default:
                         break;
                 }
-                var clipH = car.clip ? Math.max(0, car.y+destH-car.clip) : 0;
-                if (clipH < destH)
-                ctx.drawImage(image,car.x,car.y,destW,destH);
+                var clipH = car.clip ? Math.max(0, destY+destH-car.clip) : 0;
+                //if (clipH < destH)
+                ctx.drawImage(image, 0,0, car.sprite.w, car.sprite.h - (car.sprite.h*clipH/destH),destX,destY,destW,destH - clipH);
             }
         }
     
