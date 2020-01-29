@@ -1,11 +1,5 @@
 import React from 'react';
-import Player from './Assets/player.png'
 import {SPRITES_SCALE,SPRITES} from './common.js';
-import PlayerLeft from './Assets/player_left.png'
-import PlayerRight from './Assets/player_right.png'
-import PlayerUpLeft from './Assets/player_uphill_left.png'
-import PlayerUpRight from './Assets/player_uphill_right.png'
-import PlayerUp from './Assets/player_uphill_straight.png'
 import car01 from './Assets/car01.png';
 import car02 from './Assets/car02.png';
 import car03 from './Assets/car03.png';
@@ -64,6 +58,7 @@ class Sprites extends React.Component {
                         break;
                     case SPRITES.SEMI: 
                             image = img6
+                        break;
                     default:
                         break;
                 }
@@ -75,12 +70,12 @@ class Sprites extends React.Component {
     
         render (){
             return <div>
-                <img src={car01} style={this.bgStyle} ref="img"/>
-                <img src={car02} style={this.bgStyle} ref="img2"/>
-                <img src={car03} style={this.bgStyle} ref="img3"/>
-                <img src={car04} style={this.bgStyle} ref="img4"/>
-                <img src={truck} style={this.bgStyle} ref="img5"/>
-                <img src={semi} style={this.bgStyle} ref="img6"/>
+                <img src={car01} alt='' style={this.bgStyle} ref="img"/>
+                <img src={car02} alt='' style={this.bgStyle} ref="img2"/>
+                <img src={car03} alt='' style={this.bgStyle} ref="img3"/>
+                <img src={car04} alt='' style={this.bgStyle} ref="img4"/>
+                <img src={truck} alt='' style={this.bgStyle} ref="img5"/>
+                <img src={semi} alt='' style={this.bgStyle} ref="img6"/>
                 <canvas ref="canvas" width={this.props.width} height={this.props.height} style={this.canvasStyle} />
                 </div>
         };

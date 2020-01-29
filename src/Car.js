@@ -3,9 +3,6 @@ import Player from './Assets/player.png'
 import {SPRITES_SCALE} from './common.js';
 import PlayerLeft from './Assets/player_left.png'
 import PlayerRight from './Assets/player_right.png'
-import PlayerUpLeft from './Assets/player_uphill_left.png'
-import PlayerUpRight from './Assets/player_uphill_right.png'
-import PlayerUp from './Assets/player_uphill_straight.png'
 
 function Car(props) {
     const spriteWidth = 80;
@@ -34,7 +31,7 @@ function Car(props) {
 
 
     return (
-        <img src={sprite}
+        <img alt='' src={sprite}
          style={carStyle} />
     );
 }

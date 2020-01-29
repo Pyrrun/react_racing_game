@@ -1,23 +1,15 @@
 import React from 'react';
-import {COLORS,BACKGROUND,ROAD,SPRITES_CARS,SPRITES, SPRITES_SCALE} from './common.js';
-import BackgroundImg from './Assets/background.jpg';
+import {COLORS,BACKGROUND,SPRITES_CARS,SPRITES, SPRITES_SCALE} from './common.js';
 import Sky from './Assets/sky.png';
 import Stats from './Stats.js';
 import Interface from './Interface.js';
 import Hills from './Assets/hills.png';
 import Trees from './Assets/trees.png';
-import PlayerImg from './Assets/player.png'
 import Background from './Background.js';
 import Car from './Car.js';
 import Road from './Road.js';
 import Sprites from './Sprites.js'
-import car01 from './Assets/car01.png';
-import car02 from './Assets/car02.png';
-import car03 from './Assets/car03.png';
-import car04 from './Assets/car04.png';
-import truck from './Assets/truck.png';
-import buildLevel1 from './RoadBuilder';
-import buildLevel2 from './RoadBuilder';
+import * as Levels from './RoadBuilder';
 import * as Utility from './Utility.js';
 
 
@@ -36,7 +28,7 @@ class Game extends React.Component {
   roadWidth     = 2000;                                              // half the roads width
   rumbleLength  = 3;                                                 // number of segments per rumble strip
   lanes         = 3;                                                 // number of lanes
-  maxSpeed = this.segmentLength/this.step;
+  maxSpeed      = this.segmentLength/this.step;
   width         = window.innerWidth;                                             // logical canvas width
   height        = window.innerHeight;                                              // logical canvas height
   accel         =  this.maxSpeed/5;                                  // acceleration rate
@@ -48,30 +40,13 @@ class Game extends React.Component {
   cameraHeight  = 1000;                                              // z height of camera
   cameraDepth   = 1 / Math.tan((this.fieldOfView/2) * Math.PI/180);
   playerZ       = (this.cameraHeight * this.cameraDepth);            // player relative z distance from camera
+  trackLength   = null;                                              // length of entire track
   drawDistance  = 100;                                               // number of segments to draw
   segments      = [];
-  gameLoopActive= false;
-  trackLength   = null;                                              // length of entire track
-  playerX       = 0;                                                 // player x offset from center of road (-1 to 1 to stay independent of roadWidth)
   fogDensity    = 3;                                                 // exponential fog density
-  position      = 0;                                                 // current camera Z position (add playerZ to get player's absolute Z position)
-  speed         = 0;                                                 // current speed
-  cars          = [];
   totalCars     = 200;
-  renderCars    = [];
-  currentLapTime= 0;
-  lastLapTime   = 0;
-  fastest_lap_time=0;
-  level         = 1;
-  keyLeft       = false;
-  keyRight      = false;
-  keyFaster     = false;
-  keySlower     = false;
-  highscores    = [{place:1,score:1243,who:'ben'},
-  {place:2,score:1243,who:'ben'},
-  {place:3,score:1243,who:'ben'},
-  {place:4,score:1243,who:'ben'},
-  {place:5,score:1243,who:'ben'}]
+  cars          = [];
+
 
 
   constructor(props) {
@@ -80,7 +55,30 @@ class Game extends React.Component {
     document.body.style.overflow = "hidden";
 
     this.state = {
-        road :       []
+        road            : [],
+        position        : 0,                                                 // current camera Z position (add playerZ to get player's absolute Z position)
+        speed           : 0,                                                // current speed
+        renderCars      : [],
+        playerX         : 0,                                                // player x offset from center of road (-1 to 1 to stay independent of roadWidth)
+        gameLoopActive  : false,
+        currentLapTime  : 0,
+        lastLapTime     : 0,
+        fastest_lap_time: 0,
+        level           : 0,
+        keyLeft         : false,
+        keyRight        : false,
+        keyFaster       : false,
+        keySlower       : false,
+        highscores      : {level1:[{place:1,score:60,who:'ben'},
+                         {place:2,score:63.58,who:'Bartek'},
+                         {place:3,score:67.43,who:'Mateusz'},
+                         {place:4,score:75.53,who:'ATO'},
+                         {place:5,score:83.21,who:'Józef'}],
+                         level2:[{place:1,score:1243,who:'Maryja'},
+                         {place:2,score:1243,who:'Xstar'},
+                         {place:3,score:1243,who:'huncwot'},
+                         {place:4,score:1243,who:'DareDevil'},
+                         {place:5,score:1243,who:'hejka'}]}
     }
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onKeyUp = this.onKeyUp.bind(this);
@@ -101,30 +99,48 @@ class Game extends React.Component {
     return result;
   }
 
+  reset() {
+    this.setState({
+      road            : [],
+      position        : 0,                                                 // current camera Z position (add playerZ to get player's absolute Z position)
+      speed           : 0,                                                // current speed
+      renderCars      : [],
+      playerX         : 0,                                                // player x offset from center of road (-1 to 1 to stay independent of roadWidth)
+      gameLoopActive  : false,
+      currentLapTime  : 0,
+      lastLapTime     : 0,
+      fastest_lap_time: 0,
+      level           : 0,
+      keyLeft         : false,
+      keyRight        : false,
+      keyFaster       : false,
+      keySlower       : false,
+    })
+  }
   // Main game loop
   update() {
-    if (!this.gameLoopActive){
+    if (!this.state.gameLoopActive){
       return;
     }
     var dt = this.interval/1000;
 
-    var playerSegment = this.findSegment(this.position+this.playerZ);
-    var speedPercent  = this.speed/this.maxSpeed;
+    var playerSegment = this.findSegment(this.state.position+this.playerZ);
+    var speedPercent  = this.state.speed/this.maxSpeed;
     var playerW       = 80 * SPRITES_SCALE;
     var dx = dt * 2 * speedPercent;
-    var startPosition = this.position;
+    var startPosition = this.state.position;
     this.updateCars(dt,playerSegment,playerW)
 
 
-    this.position = this.increase(this.position,dt*this.speed, this.trackLength)
+    var position = this.increase(this.state.position,dt*this.state.speed, this.trackLength)
 
-    this.playerX = this.keyLeft ? this.playerX - dx : this.keyRight ? this.playerX + dx : this.playerX; 
-    this.playerX = this.playerX - (dx * speedPercent * playerSegment.curve * this.centrifugal)
-    this.speed = this.keyFaster ? this.accelerate(this.speed,this.accel,dt) : this.keySlower ? this.accelerate(this.speed,this.breaking,dt) : this.accelerate(this.speed,this.decel,dt); 
-    if (((this.playerX < -1) || (this.playerX > 1))){
+    var playerX = this.state.keyLeft ? this.state.playerX - dx : this.state.keyRight ? this.state.playerX + dx : this.state.playerX; 
+    playerX = playerX - (dx * speedPercent * playerSegment.curve * this.centrifugal)
+    var speed = this.state.keyFaster ? this.accelerate(this.state.speed,this.accel,dt) : this.state.keySlower ? this.accelerate(this.state.speed,this.breaking,dt) : this.accelerate(this.state.speed,this.decel,dt); 
+    if (((playerX < -1) || (playerX > 1))){
 
-      if(this.speed > this.offRoadLimit){
-        this.speed = this.accelerate(this.speed, this.offRoadDecel, dt);
+      if(speed > this.offRoadLimit){
+        speed = this.accelerate(speed, this.offRoadDecel, dt);
       }
 
       
@@ -133,37 +149,45 @@ class Game extends React.Component {
     for(var n = 0 ; n < playerSegment.cars.length ; n++) {
       car  = playerSegment.cars[n];
       carW = car.sprite.w * SPRITES_SCALE;
-      if (this.speed > car.speed) {
-        if (this.overlap(this.playerX, playerW, car.offset, carW, 0.8)) {
-          this.speed    = car.speed * (car.speed/this.speed);
-          this.position = this.increase(car.z, -this.playerZ, this.trackLength);
+      if (speed > car.speed) {
+        if (this.overlap(playerX, playerW, car.offset, carW, 0.8)) {
+          speed    = car.speed * (car.speed/speed);
+          position = this.increase(car.z, -this.playerZ, this.trackLength);
           break;
         }
       }
     }
-    this.playerX = this.limit(this.playerX, -2, 2);
-    this.speed   = this.limit(this.speed, 0, this.maxSpeed);
 
     this.setState({
-      road: this.buildRoad()
+      playerX : this.limit(playerX, -2, 2),
+      speed   : this.limit(speed, 0, this.maxSpeed),
+      position: position
     })
 
-    this.skyOffset  = this.increase(this.skyOffset,  this.skySpeed  * playerSegment.curve * (this.position-startPosition)/this.segmentLength, 1);
-    this.hillOffset = this.increase(this.hillOffset, this.hillSpeed * playerSegment.curve * (this.position-startPosition)/this.segmentLength, 1);
-    this.treeOffset = this.increase(this.treeOffset, this.treeSpeed * playerSegment.curve * (this.position-startPosition)/this.segmentLength, 1);
+    this.skyOffset  = this.increase(this.skyOffset,  this.skySpeed  * playerSegment.curve * (position-startPosition)/this.segmentLength, 1);
+    this.hillOffset = this.increase(this.hillOffset, this.hillSpeed * playerSegment.curve * (position-startPosition)/this.segmentLength, 1);
+    this.treeOffset = this.increase(this.treeOffset, this.treeSpeed * playerSegment.curve * (position-startPosition)/this.segmentLength, 1);
 
-    if (this.position > this.playerZ) {
-      if (this.currentLapTime && (startPosition < this.playerZ)) {
-        this.lastLapTime    = this.currentLapTime;
-        this.currentLapTime = 0;
-        if (this.lastLapTime <= this.fastest_lap_time || this.fastest_lap_time == 0) {
-          this.fastest_lap_time = this.lastLapTime;
+    if (position > this.playerZ) {
+      if (this.state.currentLapTime && (startPosition < this.playerZ)) {
+        this.setState({
+          lastLapTime    : this.state.currentLapTime,
+          currentLapTime : 0
+        })
+        if (this.state.lastLapTime <= this.state.fastest_lap_time || this.state.fastest_lap_time == 0) {
+          this.setState({
+            fastest_lap_time : this.state.lastLapTime
+          })
         }
       }
       else {
-        this.currentLapTime += dt;
+        this.setState({
+          currentLapTime : this.state.currentLapTime + dt
+        })
       }
     }
+
+    this.buildRoad()
   }
 
   // Move cars
@@ -194,14 +218,14 @@ class Game extends React.Component {
     for(i = 1 ; i < lookahead ; i++) {
       segment = this.segments[(carSegment.index+i)%this.segments.length];
   
-      if ((segment === playerSegment) && (car.speed > this.speed) && (this.overlap(this.playerX, playerW, car.offset, carW, 1.2))) {
-        if (this.playerX > 0.5)
+      if ((segment === playerSegment) && (car.speed > this.state.speed) && (this.overlap(this.state.playerX, playerW, car.offset, carW, 1.2))) {
+        if (this.state.playerX > 0.5)
           dir = -1;
-        else if (this.playerX < -0.5)
+        else if (this.state.playerX < -0.5)
           dir = 1;
         else
-          dir = (car.offset > this.playerX) ? 1 : -1;
-        return dir * 1/i * (car.speed-this.speed)/this.maxSpeed;
+          dir = (car.offset > this.state.playerX) ? 1 : -1;
+        return dir * 1/i * (car.speed-this.state.speed)/this.maxSpeed;
       }
   
       for(j = 0 ; j < segment.cars.length ; j++) {
@@ -240,7 +264,7 @@ class Game extends React.Component {
   resetCars() {
     this.cars = [];
     var n, car, segment, offset, z, sprite, speed;
-    for (var n = 0 ; n < this.totalCars ; n++) {
+    for (n = 0 ; n < this.totalCars ; n++) {
       offset = Math.random() * Utility.randomChoice([-0.8, 0.8]);
       z      = Math.floor(Math.random() * this.segments.length) * this.segmentLength;
       sprite = Utility.randomChoice(SPRITES_CARS);
@@ -284,10 +308,10 @@ class Game extends React.Component {
 
   // Build road in actual frame
   buildRoad() {
-    var baseSegment = this.findSegment(this.position);
-    var basePercent = Utility.percentRemaining(this.position, this.segmentLength);
-    var playerSegment = this.findSegment(this.position+this.playerZ);
-    var playerPercent = Utility.percentRemaining(this.position+this.playerZ, this.segmentLength);
+    var baseSegment = this.findSegment(this.state.position);
+    var basePercent = Utility.percentRemaining(this.state.position, this.segmentLength);
+    var playerSegment = this.findSegment(this.state.position+this.playerZ);
+    var playerPercent = Utility.percentRemaining(this.state.position+this.playerZ, this.segmentLength);
     var playerY       = Utility.interpolate(playerSegment.p1.world.y, playerSegment.p2.world.y, playerPercent);
     var max = this.height;
     var x = 0;
@@ -300,8 +324,8 @@ class Game extends React.Component {
       segment.looped = segment.index < baseSegment.index; 
       segment.fog = Utility.exponentialFog(n/this.drawDistance, this.fogDensity) 
       segment.clip = max;      
-      this.project(segment.p1, (this.playerX * this.roadWidth) - x,      playerY + this.cameraHeight, this.position - (segment.looped ? this.trackLength : 0), this.cameraDepth, this.width, this.height, this.roadWidth);
-      this.project(segment.p2, (this.playerX * this.roadWidth) - x - dx, playerY + this.cameraHeight, this.position - (segment.looped ? this.trackLength : 0), this.cameraDepth, this.width, this.height, this.roadWidth);
+      this.project(segment.p1, (this.state.playerX * this.roadWidth) - x,      playerY + this.cameraHeight, this.state.position - (segment.looped ? this.trackLength : 0), this.cameraDepth, this.width, this.height, this.roadWidth);
+      this.project(segment.p2, (this.state.playerX * this.roadWidth) - x - dx, playerY + this.cameraHeight, this.state.position - (segment.looped ? this.trackLength : 0), this.cameraDepth, this.width, this.height, this.roadWidth);
       x = x + dx;
       dx = dx + segment.curve;
 
@@ -343,28 +367,39 @@ class Game extends React.Component {
         clip:segment.clip});
     }
   }
-    this.renderCars = cars;
-    return road;
+  this.setState({
+    renderCars : cars,
+    road : road
+  });
 }
 
   // Key controls
   onKeyDown(e) {
     switch (e.which) {
         case 37: // Left
-            this.keyLeft = true
+            this.setState({
+              keyLeft : true
+            })      
             break;
         case 38: // Up
-            this.keyFaster =true
+            this.setState({
+              keyFaster : true
+            })     
             break;
         case 39: // Right
-            this.keyRight = true
+            this.setState({
+              keyRight : true
+            })     
             break;
         case 40: // Down
-            this.keySlower = true
+            this.setState({
+              keySlower : true
+            })     
             break;
         case 27: // ESC
-            this.gameLoopActive=false
-            this.forceUpdate()
+            this.setState({
+              gameLoopActive:false
+            })     
             break;
         default:
             break;
@@ -373,17 +408,25 @@ class Game extends React.Component {
 
   onKeyUp(e) {
     switch (e.which) {
-        case 37: // Left
-            this.keyLeft = false
+            case 37: // Left
+            this.setState({
+              keyLeft : false
+            })      
             break;
         case 38: // Up
-            this.keyFaster =false
+            this.setState({
+              keyFaster : false
+            })     
             break;
         case 39: // Right
-            this.keyRight = false
+            this.setState({
+              keyRight : false
+            })     
             break;
         case 40: // Down
-            this.keySlower = false
+            this.setState({
+              keySlower : false
+            })     
             break;
         default:
             break;
@@ -397,7 +440,6 @@ class Game extends React.Component {
     this.updateWindowDimensions();
     window.addEventListener('resize', this.updateWindowDimensions);
     this.intervalId = setInterval(this.update.bind(this), this.interval);
-    this.gameLoopActive = false;
 
 
 
@@ -409,6 +451,12 @@ class Game extends React.Component {
       window.removeEventListener("keyup",this.onKeyUp,false);
       clearInterval(this.intervalId);
   }    
+
+  shouldComponentUpdate(nextState) {
+    if(this.state.road == nextState.road || this.state.gameLoopActive == nextState.gameLoopActive)
+      return false;  
+    return true;
+  }
 
   updateWindowDimensions() {        
     this.width = window.innerWidth;
@@ -426,24 +474,27 @@ class Game extends React.Component {
 
   level1(){
     this.totalCars=100;
-    this.resetRoad(buildLevel1);
+    this.reset()
+    this.resetRoad(Levels.buildLevel1);
     this.setState({
-      road:this.buildRoad()
+      level            : 1,
+      gameLoopActive   : true
     });
-    this.gameLoopActive=true;
+    console.log(1)
   }
 
   level2(){
     this.totalCars=200;
-    this.resetRoad(buildLevel2);
+    this.reset()
+    this.resetRoad(Levels.buildLevel2);
     this.setState({
-      road:this.buildRoad()
+      level            : 2,
+      gameLoopActive   : true
     });
-    this.gameLoopActive=true;
   }
 
   render() {
-    if (this.gameLoopActive)
+    if (this.state.gameLoopActive)
       return <div>
       <Background backgroundImage={Sky}
       width={this.width} 
@@ -462,16 +513,20 @@ class Game extends React.Component {
       offset = {this.treeOffset} />
 
       <Road road={this.state.road} width={this.width} height={this.height} lanes={this.lanes}/>
-      <Sprites list={this.renderCars} width={this.width} height={this.height} roadWidth={this.roadWidth}/>
-      <Car orientation={this.keyLeft ? "left" : this.keyRight ? "right" : "straight"}
+      <Sprites list={this.state.renderCars} width={this.width} height={this.height} roadWidth={this.roadWidth}/>
+      <Car orientation={this.state.keyLeft ? "left" : this.state.keyRight ? "right" : "straight"}
       scale={this.cameraDepth/this.playerZ}
       width={this.width} 
       height={this.height}
       roadWidth={this.roadWidth}/>    
-      <Stats width={this.width} height={this.height} speed={5*Math.round(this.speed/500)} currentLapTime={this.currentLapTime} lastLapTime={this.lastLapTime} fastest_lap_time={this.fastest_lap_time} /> 
+      <Stats width={this.width} height={this.height} speed={5*Math.round(this.state.speed/500)}
+       currentLapTime={this.state.currentLapTime} 
+       lastLapTime={this.state.lastLapTime} 
+       fastest_lap_time={this.state.fastest_lap_time} 
+       best={this.state.level == 1 ? this.state.highscores.level1[0].score : this.state.highscores.level2[0].score}/> 
       </div>
     else
-      return <Interface sendData={this.getData} highscores={this.highscores} width={this.width} height={this.height}/>
+      return <Interface sendData={this.getData} highscores={this.state.highscores}  width={this.width} height={this.height}/>
 
   }
 }

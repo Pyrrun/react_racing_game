@@ -74,7 +74,7 @@ num = num || 200;
 addRoad(num, num, num, -ROAD.CURVE.EASY, -lastY()/segmentLength);
 }
 
-function buildLevel1(rumbleL,segmentL) {
+export function buildLevel1(rumbleL,segmentL) {
     segments = []
     rumbleLength = rumbleL;
     segmentLength = segmentL;
@@ -96,7 +96,7 @@ function buildLevel1(rumbleL,segmentL) {
     return segments;
 }
 
-function buildLevel2(rumbleL,segmentL) {
+export function buildLevel2(rumbleL,segmentL) {
     segments = []
     rumbleLength = rumbleL;
     segmentLength = segmentL;
@@ -116,5 +116,3 @@ function buildLevel2(rumbleL,segmentL) {
 
     return segments;
 }
-
-export default buildLevel1;

@@ -2,7 +2,7 @@ import React from 'react';
 
 class Interface extends React.Component {
 
-
+    x =[];
     BACKGROUND_COLOR = 'green';
     buttonStyle = {        
         display: 'table-cell',
@@ -36,7 +36,8 @@ class Interface extends React.Component {
 
         this.state = {
             play : false,
-            highscores : false
+            highscores : false,
+            level : 1
         }
         this.back = this.back.bind(this);
         this.play = this.play.bind(this);
@@ -92,10 +93,31 @@ class Interface extends React.Component {
 
     }
 
+
+
     highscores (){
         this.setState({
             highscores:true
         })
+    }
+
+    updateHighscores(e) {
+        this.x = []
+        for (var level in this.props.highscores){
+
+            if (e === level)
+            for (var i=0; i < this.props.highscores[level].length;i++){
+                var highscore = this.props.highscores[level][i]
+                this.x.push(<div key={i}><label style={this.hsStyle}>{highscore.place}. </label><label style={this.hsStyle}>{highscore.who}</label><label style={this.hsStyle}>Score: {highscore.score} s</label></div>)
+            }
+        }
+    }
+
+    levelChange(e){
+        this.setState({
+            level:e
+        })
+        this.updateHighscores(e)
     }
 
 
@@ -108,7 +130,9 @@ class Interface extends React.Component {
                 <div><button onClick={this.back} style={this.buttonStyle}>Back</button></div>
                 </div> : this.state.highscores ?
                     <div>
-                    {this.props.highscores.map( highscore => (<div><label style={this.hsStyle}>{highscore.place}. </label><label style={this.hsStyle}>{highscore.who}</label><label style={this.hsStyle}>Score: {highscore.score}</label></div>))}
+                    <div><input type='radio' onChange={() => this.levelChange('level1')} value='1' checked={this.state.level === 'level1'}></input>Level 1
+                    <input type='radio' value='2' onChange={() => this.levelChange('level2')} checked={this.state.level === 'level2'}></input>Level 2</div>
+                    {this.x}
                     <div><button onClick={this.back} style={this.buttonStyle}>Back</button></div>
                     </div>
                     :

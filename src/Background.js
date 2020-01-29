@@ -40,7 +40,7 @@ class Background extends React.Component {
 
     render (){
         return <div>
-            <img src={this.props.backgroundImage} style={this.bgStyle} ref="img"/>
+            <img alt='' src={this.props.backgroundImage} style={this.bgStyle} ref="img"/>
             <canvas ref="canvas" width={this.props.width} height={this.props.height} style={this.canvasStyle} />
             </div>
     };

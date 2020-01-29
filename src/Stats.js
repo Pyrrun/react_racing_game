@@ -22,6 +22,7 @@ function Stats(props) {
             <span style={spanStyle}>Obecny czas: {Number(props.currentLapTime).toFixed(2)} s</span>
             <span style={spanStyle}>Ostatni czas: {Number(props.lastLapTime).toFixed(2)} s</span>
             <span style={spanStyle}>Najlepszy czas: {Number(props.fastest_lap_time).toFixed(2)} s</span>
+            <span style={spanStyle}>highscore: {Number(props.best).toFixed(2)} s</span>
             <span style={spanStyle}>Prędkość: {props.speed} km/h</span>
         </div>
     );

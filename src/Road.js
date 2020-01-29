@@ -45,7 +45,6 @@ class Road extends React.Component {
             var w2 = this.props.road[n].w2;
             var color = this.props.road[n].color;
             var lanew1, lanew2, lanex1, lanex2, lane;
-            console.log(x1)
 
 
             var r1 = this.rumbleWidth(w1, this.props.lanes);
